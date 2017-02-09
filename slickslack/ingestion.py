@@ -2,7 +2,8 @@ import os
 import re
 import json
 import fnmatch
-from collections import deque
+#from collections import deque
+
 
 def list_channels(export_root='.', includes=r'(private_)?channels\S+.json$'):
     res = {}
@@ -16,7 +17,7 @@ def list_channels(export_root='.', includes=r'(private_)?channels\S+.json$'):
     return res
 
 
-def load_channels(export_root='.', includes=None, excludes=None):
+def load_channels(export_root='.', includes=None, excludes=None, include_mpim=False):
     """Schema - see also https://api.slack.com/types
     {
         channel_info:
@@ -41,9 +42,18 @@ def load_channels(export_root='.', includes=None, excludes=None):
     if excludes: excludes = map(fnmatch.translate, excludes)
 
     chans = list_channels(export_root)
-    return [_load_json(chan_path)
-            for chan_name, chan_path in chans.iteritems()
-            if _name_satisfies_incl_excl(includes, excludes, chan_name)]
+
+    res =[]
+    for chan_name, chan_path in chans.iteritems():
+        if not _name_satisfies_incl_excl(includes, excludes, chan_name):
+            continue
+
+        chan = _load_json(chan_path)
+        if not include_mpim and chan['channel_info'].get('is_mpim'):
+            continue
+
+        res.append(chan)
+    return res
 
 
 def load_user_dict(export_root='.', file_name='metadata.json'):
@@ -71,23 +81,26 @@ def extract_ats(text):
     return [m.group(1) for m in at_re.finditer(text)]
 
 
-def interactions_event_stream(msgs):
+def iter_connections(msgs):
     """
     :param msgs:
     :return:
     """
-    recents = deque([], 3)
+
+    # TODO: track last n messages we see, infer interaction
+    #   from a 'chatty' conversation - e.g. recents = deque([], 3) etc
+
     for m in sorted(msgs, key=lambda x: x['ts']):
+        ts = m['ts']
+
         # count ats
         for at in extract_ats(m['text']):
-            yield { 's' : m['user'], 't' : at, 'ts' : m['ts']}
+            yield {'s': m['user'], 't': at, 'ts': ts}
 
         for r in m.get('reactions') or []:
             # r['name'] is the reaction, e.g. +1
             for user in r['users']:
-                yield {'s': user, 't': m['user'], 'ts': m['ts']}
+                yield {'s': user, 't': m['user'], 'ts': ts}
 
         for r in m.get('replies') or []:
-            yield {'s': r['user'], 't': m['user'], 'ts': m['ts']}
-
-
+            yield {'s': r['user'], 't': m['user'], 'ts': ts}
