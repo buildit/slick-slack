@@ -23,8 +23,17 @@ users = sl.load_user_dict(export_root)
 chans = sl.load_channels(export_root, includes=['myprefix*', '*myinfix*', 'w?ldc"rd'])
 ```
 
-Get / filter messages:
+### Get / filter messages:
+
 ```msgs = sum([], [m for c in chans
              for m in c['messages']
              if not m.get('is_intro') and not m.get('subtype')])
 ```
+
+### Time series of interactions between users
+
+Currently this comes from 1) '@' references, and 2) emoji reactions
+
+```for e in sl.iter_connections(msgs):
+    # do stuff
+
