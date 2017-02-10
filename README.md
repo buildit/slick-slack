@@ -14,7 +14,7 @@ even direct messages if desired.
 
 To run (and extract history in the current directory):
 
-```python -m slickslack.extract --token='123token' [--dryRun=True] [--skipDirectMessages] [--skipPrivateChannels]
+```python -m slickslack.extract --token='123token' [--dryRun] [--skipDirectMessages] [--skipPrivateChannels]
 ```
 
 ### Parse extracted Slack history
