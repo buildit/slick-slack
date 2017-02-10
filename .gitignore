@@ -2,6 +2,8 @@
 .DS_Store
 *.egg-info
 .idea
+ .ipynb_checkpoints/
+*.ipynb
 
 # Downloaded data
 channels
