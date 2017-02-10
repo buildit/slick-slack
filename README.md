@@ -7,6 +7,8 @@ A library for extraction and processing of Slack data.
 
 Based on https://gist.github.com/Chandler/fb7a070f52883849de35.
 
+Get a slack token from https://api.slack.com/web
+
 Unlike direct exports via Slack UI, this one uses the API to pull in public and private channels,
 even direct messages if desired.
 
