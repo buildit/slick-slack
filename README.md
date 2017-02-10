@@ -12,12 +12,15 @@ even direct messages if desired.
 
 To run (and extract history in the current directory):
 
-```python -m slickslack.extract --token='123token' [--dryRun=True] [--skipDirectMessages] [--skipPrivateChannels]
+```
+python -m slickslack.extract --token='123token' [--dryRun=True] [--skipDirectMessages] [--skipPrivateChannels]
+
 ```
 
 ### Parse extracted Slack history
 
-```import slickslack as sl
+```
+import slickslack as sl
 export_root='.'
 users = sl.load_user_dict(export_root)
 chans = sl.load_channels(export_root, includes=['myprefix*', '*myinfix*', 'w?ldc"rd'])
@@ -25,7 +28,8 @@ chans = sl.load_channels(export_root, includes=['myprefix*', '*myinfix*', 'w?ldc
 
 ### Get / filter messages:
 
-```msgs = sum([], [m for c in chans
+```
+msgs = sum([], [m for c in chans
              for m in c['messages']
              if not m.get('is_intro') and not m.get('subtype')])
 ```
@@ -34,6 +38,7 @@ chans = sl.load_channels(export_root, includes=['myprefix*', '*myinfix*', 'w?ldc
 
 Currently this comes from 1) '@' references, and 2) emoji reactions
 
-```for e in sl.iter_connections(msgs):
+```
+for e in sl.iter_connections(msgs):
     # do stuff
-
+```
