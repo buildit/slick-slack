@@ -3,3 +3,8 @@
 *.egg-info
 .idea
 
+# Downloaded data
+channels
+direct_messages
+private_channels
+metadata.json
