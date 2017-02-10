@@ -32,7 +32,7 @@ g = nx.Graph()
 for e in filter(lambda conn: is_buildit_user(conn['s']) and is_buildit_user(conn['t']), sl.iter_connections(msgs)):
     g.add_edge(users[e['s']], users[e['t']])
 
-pos=nx.spring_layout(g)
+pos=nx.circular_layout(g)
 plt.figure(1,figsize=(20,20))
 nx.draw(g,pos,
         node_color='#A0CBE2',
