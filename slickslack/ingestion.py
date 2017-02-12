@@ -24,11 +24,14 @@ def _slack_ts_str_to_epoch_sec(ts_str):
 
 
 def _enrich_channel(chan):
-    # add datetime to each message; retain 'ts' as it guarantees
-    # uniqueness per https://github.com/slackhq/slack-api-docs/issues/7
     for m in chan['messages']:
+        # add datetime to each message; retain 'ts' as it guarantees
+        # uniqueness per https://github.com/slackhq/slack-api-docs/issues/7
         m[u'dt'] = datetime.utcfromtimestamp(
                         _slack_ts_str_to_epoch_sec(m['ts']))
+
+        # add channel id
+        m[u'ch_id'] = chan['channel_info']['id']
 
 
 def load_channels(export_root='.', includes=None, excludes=None, include_mpim=False):
@@ -55,10 +58,11 @@ def load_channels(export_root='.', includes=None, excludes=None, include_mpim=Fa
     if includes: includes = map(fnmatch.translate, includes)
     if excludes: excludes = map(fnmatch.translate, excludes)
 
-    chans = list_channels(export_root)
+    chan_source = list_channels(export_root)
 
-    res =[]
-    for chan_name, chan_path in chans.iteritems():
+    chans = []
+    chan_name_dict = {}
+    for chan_name, chan_path in chan_source.iteritems():
         if not _name_satisfies_incl_excl(includes, excludes, chan_name):
             continue
 
@@ -67,8 +71,10 @@ def load_channels(export_root='.', includes=None, excludes=None, include_mpim=Fa
             continue
 
         _enrich_channel(chan)
-        res.append(chan)
-    return res
+        chans.append(chan)
+        chan_name_dict[chan['channel_info']['id']] = chan['channel_info']['name']
+
+    return chans, chan_name_dict
 
 
 def load_user_dict(export_root='.', file_name='metadata.json'):
@@ -96,7 +102,7 @@ def extract_ats(text):
     return [m.group(1) for m in at_re.finditer(text)]
 
 
-def iter_connections(msgs):
+def iter_interactions(msgs):
     """
     :param msgs:
     :return:
@@ -106,16 +112,25 @@ def iter_connections(msgs):
     #   from a 'chatty' conversation - e.g. recents = deque([], 3) etc
 
     for m in sorted(msgs, key=lambda x: x['ts']):
-        ts = m['ts']
+        def make_event(src, tgt, typ):
+            return {u'src': src,
+                    u'tgt': tgt,
+                    u'ts': m['ts'],
+                    u'dt': m['dt'],
+                    u'ch_id': m['ch_id'],
+                    u'type': typ}
 
-        # count ats
+        # count ats ("@')
         for at in extract_ats(m['text']):
-            yield {'s': m['user'], 't': at, 'ts': ts}
+            yield make_event(m['user'], at, 'at')
 
+        # count reactions
         for r in m.get('reactions') or []:
             # r['name'] is the reaction, e.g. +1
+            # note reactions don't carry a timestamp, so we use the one from the message
             for user in r['users']:
-                yield {'s': user, 't': m['user'], 'ts': ts}
+                yield make_event(user, m['user'], 'reaction')
 
+        # explicit replies
         for r in m.get('replies') or []:
-            yield {'s': r['user'], 't': m['user'], 'ts': ts}
+            yield make_event(r['user'], m['user'], 'reply')
