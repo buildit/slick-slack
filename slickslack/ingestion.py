@@ -2,6 +2,7 @@ import os
 import re
 import json
 import fnmatch
+from datetime import datetime
 #from collections import deque
 
 
@@ -15,6 +16,19 @@ def list_channels(export_root='.', includes=r'(private_)?channels\S+.json$'):
             chan_name = fi.split('.json')[0]
             res[chan_name] = file_path
     return res
+
+
+def _slack_ts_str_to_epoch_sec(ts_str):
+    assert type(ts_str == 'str')
+    return int(ts_str.split('.')[0])
+
+
+def _enrich_channel(chan):
+    # add datetime to each message; retain 'ts' as it guarantees
+    # uniqueness per https://github.com/slackhq/slack-api-docs/issues/7
+    for m in chan['messages']:
+        m[u'dt'] = datetime.utcfromtimestamp(
+                        _slack_ts_str_to_epoch_sec(m['ts']))
 
 
 def load_channels(export_root='.', includes=None, excludes=None, include_mpim=False):
@@ -52,6 +66,7 @@ def load_channels(export_root='.', includes=None, excludes=None, include_mpim=Fa
         if not include_mpim and chan['channel_info'].get('is_mpim'):
             continue
 
+        _enrich_channel(chan)
         res.append(chan)
     return res
 
