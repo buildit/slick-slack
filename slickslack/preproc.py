@@ -1,6 +1,29 @@
 import re
 
 
+def _default_msgs_filter(m):
+    return not m.get('is_intro') and not m.get('subtype')
+
+
+def messages_from_channels(chans, msgs_filter=_default_msgs_filter, fragment_interval_sec=300):
+    res = []
+
+    for c in chans:
+        #last_chan_msg_ts = -1
+        #buf = None
+        for msg in c['messages']:
+            if not msgs_filter(msg):
+                continue
+            # if not buf
+            #                     or buf['user'] != msg['user'] or msg['':
+            #                 res.append(msg.copy())
+            #                 buf = res[-1]
+            #             else:
+
+            res.append(msg)
+    return res
+
+
 def iter_interactions(msgs):
     """
     :param msgs:
@@ -40,8 +63,14 @@ def slack_ts_str_to_epoch_sec(ts_str):
     return int(ts_str.split('.')[0])
 
 
+at_re = re.compile(r'<@(\w+)>')
+shout_re = re.compile(r'<!(here|channel|everyone)')
+
+
 def extract_ats_from_text(text):
-    at_re = re.compile(r'<@(\w+)>')
     return [m.group(1) for m in at_re.finditer(text)]
 
+
+def extract_shouts_from_text(text):
+    return [m.group(1) for m in shout_re.finditer(text)]
 
