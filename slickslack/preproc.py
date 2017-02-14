@@ -1,11 +1,11 @@
 import re
 
 
-def _default_msgs_filter(m):
+def default_msgs_filter(m):
     return not m.get('is_intro') and not m.get('subtype')
 
 
-def messages_from_channels(chans, msgs_filter=_default_msgs_filter, fragment_interval_sec=300):
+def messages_from_channels(chans, msgs_filter=default_msgs_filter, fragment_interval_sec=300):
     res = []
 
     for c in chans:

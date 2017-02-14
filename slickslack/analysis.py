@@ -11,7 +11,7 @@ def popular_channels(chans, limit=20):
     return top_channels[:limit]
 
 
-def most_mentions(msgs, limit=20):
+def most_mentioned(msgs, limit=20):
     """Top mentions by '@' references
     """
     mentions = {}
